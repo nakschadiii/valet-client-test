@@ -1,0 +1,29 @@
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<button onclick="window.location.href = '/history'" style="position: fixed; z-index: 999; background-color: white;color: black; padding: 1em; top: 0; left:0;">< Retour</button>
+<div id="reader"></div>
+
+<script>
+    const html5QrCode = new Html5Qrcode(/* element id */ "reader");
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    html5QrCode.start({ facingMode: "environment" }, config, (decodedText, decodedResult) => {
+        console.log(`QR Code detected: ${decodedText}`);
+        
+        fetch('http://localhost:3000/reservations/<%- id %>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ qrCode: decodedText })
+        })
+
+        html5QrCode.stop();
+    });
+
+</script>
+
+<style>
+    #reader {
+        width: 100%;
+        height: 100%;
+    }
+</style>

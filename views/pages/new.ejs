@@ -1,0 +1,130 @@
+<%- include('../partials/nav', {variant:'history'}); %>
+
+<create_car>
+    <label for="carType">Choisissez un type de voiture :</label>
+    <select id="carType" name="carType">
+        <option value="default">Choisissez un type de voiture</option>
+        <option value="citadine">Citadine</option>
+        <option value="berline">Berline</option>
+        <option value="suv">SUV</option>
+        <option value="coupe">Coupé</option>
+        <option value="cabriolet">Cabriolet</option>
+        <option value="break">Break</option>
+        <option value="monospace">Monospace</option>
+        <option value="pickup">Pickup</option>
+        <option value="4x4">4x4</option>
+        <option value="supercar">Supercar</option>
+        <option value="hypercar">Hypercar</option>
+        <option value="utilitaire">Utilitaire</option>
+    </select>
+
+    <label for="plateNumber">Plaque d'immatriculation :</label>
+    <input type="text" id="plateNumber" name="plateNumber" pattern="^[A-Z0-9]{1,10}$" required placeholder="Ex: AB 123 CD" />
+
+    <button id="submit_car">Valider</button>
+</create_car>
+
+<create_stationnement style="display: none;">
+    <label for="date">Date/heure d'entrée :</label>
+    <input type="date" id="date" name="date" required />
+    <input type="time" id="time" name="time" required />
+
+    <label for="duration">Durée de stationnement :</label>
+    <input type="number" id="duration" name="duration" min="1" required placeholder="En heures" />
+
+    <button id="submit">Valider</button>
+
+<script>
+    let voiture;
+    let place;
+    document.querySelector('button#submit_car').addEventListener('click', function() {
+        const carType = document.getElementById('carType').value;
+        const plateNumber = document.getElementById('plateNumber').value;
+
+        fetch('http://localhost:3000/voiture/new', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: carType,
+                plaque: plateNumber
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                voiture = data.voiture.id;
+                fetch('http://localhost:3000/place/type/' + data.voiture.type)
+                .then(response => response.json())
+                .then(data => {
+                    const [ place_dispo ] = data.filter(place => place.stationnements?.length === 0 || place.stationnements.flat().date_effective_sortie === null);
+                    if (!place_dispo) {
+                        alert('Aucune place de parking disponible');
+                        return;
+                    }
+                    place = place_dispo.id;
+                });
+
+                document.querySelector('create_car').style.display = 'none';
+                document.querySelector('create_stationnement').style.display = 'flex';
+            });
+    });
+
+    document.querySelector('button#submit').addEventListener('click', function() {
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const duration = document.getElementById('duration').value;
+
+        console.log(
+            new Date(date + 'T' + time).toISOString(),
+            duration,
+            new Date(new Date(date + 'T' + time) + (parseInt(duration) * 60 * 60 * 1000)).toISOString()
+        )
+
+        fetch('http://localhost:3000/reservations/new', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id_voiture: voiture,
+                id_place: place,
+                date_reservation: new Date().toISOString(),
+                date_prevue_arrivee: new Date(date + 'T' + time).toISOString(),
+                date_prevue_depart: new Date(new Date(date + 'T' + time) + duration * 60 * 60 * 1000).toISOString()
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                alert('Réservation effectuée avec succès');
+            });
+    });
+</script>
+
+<style>
+    create_car {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px;
+    }
+
+    create_stationnement {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px;
+    }
+</style>

@@ -1,0 +1,76 @@
+<%- include('../partials/nav', {variant:'new'}); %>
+
+<reservations></reservations>
+
+<script src="/scripts/valet_getReservationStatus.js"></script>
+<script>
+    fetch('http://localhost:3000/reservations')
+        .then(response => response.json())
+        .then(data => {
+            document.querySelector('reservations').innerHTML = data.toSorted((a,b) => new Date(b.date_reservation) - new Date(a.date_reservation)).map(reservation => {
+                const stationnement = reservation.stationnements?.[0];
+                const now = new Date();
+                const status = getReservationStatus(reservation);
+
+                console.log(reservation, stationnement, status);
+                
+                return  `
+                    <div onclick="window.location.href = '/reservations/${reservation.id}'">
+                        <h2>${reservation.voiture.type} (${reservation.voiture.plaque}) - ${status}</h2>
+                        <h3>Parking: St-Jean Malteser | place ${reservation.place.position_x}-${reservation.place.position_y}</h3>
+
+                        <div>Date réservation: ${new Date(reservation.date_reservation).toLocaleDateString()} ${new Date(reservation.date_reservation).toLocaleTimeString()}</div>
+
+                        ${(stationnement?.date_effective_arrivee) ? `<div>Date effective d'arrivée: ${new Date(stationnement.date_effective_arrivee).toLocaleDateString()} ${new Date(stationnement.date_effective_arrivee).toLocaleTimeString()}</div>` : `<div>Date prévue d'arrivée: ${new Date(reservation.date_prevue_arrivee).toLocaleDateString()} ${new Date(reservation.date_prevue_arrivee).toLocaleTimeString()}</div>`}
+                        ${(stationnement?.date_effective_sortie) ? `<div>Date effective de sortie: ${new Date(stationnement.date_effective_sortie).toLocaleDateString()} ${new Date(stationnement.date_effective_sortie).toLocaleTimeString()}</div>` : `<div>Date prévue de départ: ${new Date(reservation.date_prevue_depart).toLocaleDateString()} ${new Date(reservation.date_prevue_depart).toLocaleTimeString()}</div>`}
+                    </div>
+                `
+            }).join('');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+</script>
+
+<style>
+    reservations{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        flex-direction: column;
+        width: 100%;
+        gap: 1.5em;
+        padding: 2em;
+    }
+
+    reservations>div{
+        width: 100%;
+        border-radius: 10px;
+        box-shadow: 0 0 10px #ccc;
+        padding: 1em;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+    }
+
+    reservations>div>h2{
+        margin: 0;
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+
+    reservations>div>h3{
+        margin: 0;
+        margin-top: -0.25em;
+        font-size: 1.25em;
+        font-weight: 400;
+        color: #bbb
+    }
+
+    reservations>div>div{
+        margin: 0;
+        font-size: 1em;
+        font-weight: 300;
+        color: #333;
+    }
+</style>

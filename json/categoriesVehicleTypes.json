@@ -1,0 +1,19 @@
+{
+    "small": [
+      "Micro-urbaines",
+      "Mini-citadines",
+      "Minispaces",
+      "Citadines polyvalentes"
+    ],
+    "medium": [
+      "Berlines compactes",
+      "Berlines",
+      "Monospaces compacts"
+    ],
+    "large": [
+      "Grands monospaces",
+      "SUV",
+      "Tout-terrains",
+      "Pick-up"
+    ]
+  }
